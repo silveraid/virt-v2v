@@ -463,6 +463,7 @@ let parse_libvirt_xml ?conn xml =
         match xpath_string "@type" with
         | Some "network" -> Some Network
         | Some "bridge" -> Some Bridge
+        | Some "vds" -> Some Network
         | None | Some _ -> None in
       match vnet_type with
       | None -> ()
@@ -476,7 +477,16 @@ let parse_libvirt_xml ?conn xml =
            } in
            List.push_front nic nics
          in
-         match xpath_string "source/@network | source/@bridge" with
+         (* For vds (distributed virtual switch) interfaces, the network
+          * name comes from the portgroupid attribute of the source element.
+          * For regular network/bridge interfaces, use the network or bridge
+          * attribute.
+          *)
+         let vnet_source =
+           match xpath_string "@type" with
+           | Some "vds" -> xpath_string "source/@portgroupid"
+           | _ -> xpath_string "source/@network | source/@bridge" in
+         (match vnet_source with
          | None -> ()
          | Some "" ->
             (* The libvirt VMware driver produces at least <source
@@ -484,7 +494,7 @@ let parse_libvirt_xml ?conn xml =
              *)
             add_nic (sprintf "eth%d" i)
          | Some vnet ->
-            add_nic vnet
+            add_nic vnet)
     done;
     List.rev !nics in
 
