@@ -121,21 +121,14 @@ jobs:
             ./libguestfs/run ./configure CFLAGS="-fPIC -g -O2" --enable-werror
             ./libguestfs/run make -j
 
-      # feb2026: tests mostly run but random bits fail with
-      #   part_to_partnum_stub: /dev/sda2: No such file or directory
-      # Possibly this is systemd udev issue which is fixed in v260.
-      # Let's try enabling again when fedora-44 is out
-      # Some discussion: https://github.com/libguestfs/virt-v2v/pull/135
-      #
-      # - name: Run the full tests
-      #   run: |
-      #       ./libguestfs/run libguestfs-test-tool
-      #
-      #       # Busted on root:
-      #       # virt-v2v: changeuid: test-o-ovirt.d/12345678-1234-1234-1234-123456789abc/x8gdeog2: Sys_error("test-o-ovirt.d/12345678-1234-1234-1234-123456789abc/x8gdeog2: Permission denied")
-      #       export SKIP_TEST_O_OVIRT_SH=1
-      #
-      #       if ! ./libguestfs/run make check; then
-      #           find -name test-suite.log -exec cat {} \;
-      #           exit 1
-      #       fi
+      - name: Archive build artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r ./libguestfs/run ./artifacts/
+          tar -czf build-artifacts.tgz -C artifacts .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build-artifacts.tgz
