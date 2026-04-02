@@ -123,9 +123,7 @@ jobs:
 
       - name: Archive build artifacts
         run: |
-          mkdir -p artifacts
-          cp -r ./libguestfs/run ./artifacts/
-          tar -czf build-artifacts.tgz -C artifacts .
+          tar -czf build-artifacts.tgz -C /__w .
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
